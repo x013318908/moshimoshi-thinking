@@ -1,0 +1,8 @@
+# Keep the public GitHub repository focused on methodology documentation.
+*
+
+!.gitignore
+!README.md
+!methodology.md
+!kj/
+!kj/README.md
