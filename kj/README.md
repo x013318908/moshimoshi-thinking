@@ -14,7 +14,7 @@
 | IDEA | `ideas/` | `ideas/*.md` | 同左 | `ideas/kj/` |
 | WC | `wiki_chatgpt_ideas/` | `wiki_chatgpt_ideas/sources/*.html` | `wiki_chatgpt_ideas/normalized_sources/*.md` | `wiki_chatgpt_ideas/kj/` |
 | WA | `wiki_all_ideas/` | `wiki_all_ideas/tar20260505.tar.gz`, `wiki_all_ideas/raw_sources/*.wiki.txt` | `wiki_all_ideas/normalized_sources/*.md`, `manifest.json` | `wiki_all_ideas/kj/` |
-| CONV | このセッションの会話由来メモ | `kj/conversation-source-cards.md` | 同左 | 未作成 |
+| CONV | このセッションの会話由来メモ | `kj/conversation-source-cards.md` | 同左 | `kj/conversation-source-cards.md`、必要時に `kj/adopted_fragments/` |
 
 現時点では `renmemo_ideas/` は対象外。必要になったら、別途接頭辞と処理範囲を決めてから加える。
 
@@ -34,6 +34,9 @@
 - `wiki_all_ideas/` の上位ラベル: `WA-UL01` から
 - 横断上位ラベル: `XUL01` から
 - 会話由来の原文カード: `CONV001` から
+- 会話由来の個別採用断片: 必要になったテーマ別ファイルで `CONV-VF-*` を使う。断片文は `CONVxxx` の `### 原文` に含まれる本人由来の最小抜粋から取り、検索用リライト、抽象化、具体化、KJメモ、AI候補本文は混ぜない。
+- 会話由来の個別採用断片で `その方針` などの先行発話参照が必要な場合も、断片文は本人原文のまま残し、先行参照は原文位置、メモ、照合元へ分ける。
+- `CONV-VF-*` のテーマ別ファイルは、実際の本人由来抜粋を個別採用断片として採用するときだけ `kj/adopted_fragments/` に作る。ルール整理、判断ログ、AI候補だけの段階では探索キャッシュに留める。詳細は [CONV-VF テーマ別ファイルの作成条件](exploration-cache-2026-05-21-conv-vf-theme-file-creation-conditions.md) に残す。
 
 既存ファイル内のIDはそのまま維持する。横断ファイルでだけ、接頭辞を補って衝突を避ける。
 
@@ -46,6 +49,24 @@
 3. `wiki_all_ideas/kj/adopted_fragments/` と `wiki_all_ideas/kj/exploration_cache_index.md` で、個別採用済みの断片と探索済みテーマを確認する。
 4. 広い探索が必要なときだけ、`wiki_all_ideas/normalized_sources/` と `manifest.json` を検索する。
 5. 断片を採用する前に、正規化資料だけでなく一次資料または原文へ戻る。
+
+## 会話由来の個別採用断片
+
+`CONV` カードから個別採用断片を作る場合も、先にテーマ別ファイルだけを作らない。
+
+作成条件:
+- `CONVxxx` の `### 原文` に本人由来の抜粋できる文がある。
+- その抜粋が、1判断、1問い、1操作、1制約のどれかとして再利用できる。
+- 探索テーマ上で実際に使うため、採用ラベル、出典カード、原文位置、確認状態を付けられる。
+- 同じテーマの断片が今後増える見込みがあり、索引から辿る価値がある。
+
+最初の実断片を採用するときに、`kj/adopted_fragments/index.md` と `kj/adopted_fragments/YYYY-MM-DD-<theme>-conversation-fragments.md` を同時に作る。
+
+IDは `CONV-VF-<theme-prefix>-001` から始める。テーマや採用ラベルが後で変わっても、断片そのものが同じならIDは維持する。
+
+`CONV-VF-*` を採用した時点で、断片文と同じ本人由来抜粋から短い原文ハッシュを作り、当面は `メモ` に `原文ハッシュ: sha1-xxxxxxxx` として置く。原文ハッシュは行番号ずれ時の照合補助であり、断片IDや採用ラベルの代わりにはしない。
+
+`その方針`、`それ`、`この作業` などの指示語が断片の意味を担う場合は、断片文を書き換えず、`先行参照: CONV005 ### 原文` のように最小の先行カードまたは先行行をメモや原文位置に残す。詳細は [会話内指示語の先行発話参照範囲](exploration-cache-2026-05-21-conversation-antecedent-reference-range.md) に残す。
 
 ## 横断探索キャッシュ
 
@@ -71,6 +92,8 @@
 
 単一コーパス内で完結する探索キャッシュは、そのコーパス内の `kj/` に残してよい。
 
+状態名は `未整理`、`採用候補あり`、`断片化済み`、`保留` を使う。旧称の `採用済み` は「必要な断片をテーマ別の個別採用断片へ移した」の意味で、ラベルや仮説の確定ではない。詳細は [採用済みと確定済みを分ける状態名](exploration-cache-2026-05-21-adopted-vs-final-state-names.md) に残す。
+
 ## 横断上位ラベル整理
 
 複数コーパスをまたぐ上位ラベル整理は、既存ラベルの置き換えではなく、既存ラベル同士を一時的につなぐ仮の対応表として作る。
@@ -89,12 +112,16 @@
 横断上位ラベルは `XUL01` から始める。
 `XUL` も完成した分類ではなく、再探索で変更される仮ラベルとして扱う。
 
+新しい採用ラベルや上位ラベルを作るたびに、機械的に `XUL` へ接続しない。複数テーマの再探索、既存ラベルとの比較、ラベル変更履歴、未決論点の追跡に効く場合だけ接続する。詳細は [XUL接続タイミング](exploration-cache-2026-05-21-xul-connection-timing.md) に残す。
+
 ## 現時点の処理済み範囲
 
 - `ideas/`: 初回7カードから `IDEA-F001` から `IDEA-F039`、`IDEA-L1` から `IDEA-L8`、`IDEA-UL1` が作成済み。
 - `wiki_chatgpt_ideas/`: 31ファイルから原文カード、断片候補、上位ラベル候補が作成済み。
 - `wiki_all_ideas/`: 3979ページから原文カード、一括抽出断片、上位ラベル候補が作成済み。
-- `wiki_all_ideas/`: `ChatGPT×Wiki`、`モシモシモノリス`、`発想支援方法` は個別採用断片として昇格済み。
+- `wiki_all_ideas/`: `ChatGPT×Wiki`、`モシモシモノリス`、`発想支援方法`、`検索支援` は個別採用断片として昇格済み。
+- `CONV`: `材料提示と要約比較` は、`CONV002` から `CONV004` の本人由来原文から個別採用断片として昇格済み。
+- `CONV`: `仮ラベルとラベル整理` は、`CONV005` と `CONV006` の本人由来原文から個別採用断片として昇格済み。
 
 ## 運用メモ
 
